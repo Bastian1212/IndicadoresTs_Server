@@ -5,10 +5,11 @@ const sHistorial = new servicios2.historialServicios();
 
 import {Request, Response} from "express";
 
+
 class metricasServicios{
 
     async getMetricas(res : Response) {
-        const TASK_QUERY = "select * from metricas"
+        const TASK_QUERY = "select * from metricas ORDER BY Aprobado"
         connection.query(TASK_QUERY, (err : string, respose : Response) =>{
             if(err) console.log(err)
             else res.send(respose)
@@ -17,25 +18,23 @@ class metricasServicios{
 
     async createMetricas(res : Response,req : Request) {
         const ADD_QUERY = `insert into metricas values ('${req.body.id}','${req.body.nombre}', 'Añadir', 0, 0);`
-        connection.query(ADD_QUERY, (err : string) =>{
+        connection.query(ADD_QUERY, (err : String) =>{
             if(err) console.log(err)
             else res.send('addmetricas')
         })
     }
 
-    async setAprobado(_res : Response,id : string) {
+    async setAprobado(_res : Response    ,id : string) {
 
-        const myArray = id.split("-");
+        const myArray = id.split("_");
         id = myArray[0];
         const solicitud = myArray[1];
+        const now = myArray[2];
 
         const UPDATE_QUERY = `UPDATE metricas SET Aprobado = 1 WHERE id = "${id}";`
         connection.query(UPDATE_QUERY, (err : string) =>{
             if(err) console.log(err)
         })
-
-        var today = new Date();
-        var now = today.toLocaleString();
 
         if(solicitud === 'Añadir'){
             sHistorial.createHistorial(0,{body: { id_imm: id, tipo: 3, solicitud: 'Añadir', estado: 'Aprobado', fecha: now }} );
@@ -46,17 +45,17 @@ class metricasServicios{
 
 
     async setPeticion(_res : Response,id : string) {
-
         const ADD_QUERY = `UPDATE metricas SET Peticion = 'Eliminar', Aprobado = 0 WHERE id = '${id}';`
         connection.query(ADD_QUERY, (err : string) =>{
             if(err) console.log(err)
         })   
     }
 
-    async deleteMetricas(_res : Response, id : string){
-        const myArray = id.split("-");
+    async deleteMetricas(_res : Response, id : string ){
+        const myArray = id.split("_");
         id = myArray[0];
         const solicitud = myArray[1];
+        const now = myArray[2];
         const D = Math.random().toString(36).substr(2,18);
 
         const sIndicadores = new servicios.indicadoresServicios();
@@ -78,9 +77,6 @@ class metricasServicios{
 
 
         sHistorial.setHistorial(0,{body: { D: D, id: id, tipo: 3}} ); 
-        
-        var today = new Date();
-        var now = today.toLocaleString();
 
         if(solicitud === 'Eliminar'){
             sHistorial.createHistorial(0,{body: { id_imm: `${D}`, tipo: 3, solicitud: 'Eliminar', estado: 'Aprobado', fecha: now }} ); 
